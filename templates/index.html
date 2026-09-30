@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EASY MED | Smart Doctor Recommendation & Queue Management System</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="logo-area" onclick="navigateTo('home')">
+                <div class="logo-icon"><i class="fa-solid fa-hospital-user"></i></div>
+                <div class="logo-text">
+                    <span class="brand-name">EASY MED</span>
+                    <span class="brand-tagline">Queue & Consult</span>
+                </div>
+            </div>
+
+            <nav class="nav-links">
+                <button class="nav-btn active" data-target="home" onclick="navigateTo('home')"><i class="fa-solid fa-house"></i> Home</button>
+                <button class="nav-btn" data-target="symptoms" onclick="navigateTo('symptoms')"><i class="fa-solid fa-notes-medical"></i> Select Symptoms</button>
+                <button class="nav-btn" data-target="doctors" onclick="navigateTo('doctors')"><i class="fa-solid fa-user-doctor"></i> Find Doctors</button>
+                <button class="nav-btn" data-target="my-token" onclick="navigateTo('my-token')"><i class="fa-solid fa-ticket"></i> My Token <span class="badge-count" id="nav-token-badge" style="display:none;">1</span></button>
+                <button class="nav-btn" data-target="queue-status" onclick="navigateTo('queue-status')"><i class="fa-solid fa-clock-rotate-left"></i> Queue Status</button>
+                <button class="nav-btn admin-link" data-target="admin" onclick="navigateTo('admin')"><i class="fa-solid fa-sliders"></i> Doctor Portal</button>
+            </nav>
+
+            <div class="nav-user-profile">
+                <div class="user-avatar"><i class="fa-solid fa-user-injured"></i></div>
+                <div class="user-info">
+                    <span class="user-name" id="current-user-name">Rahul Sharma</span>
+                    <span class="user-role">Patient ID: #MQ-987</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Emergency Warning Modal / Banner -->
+    <div id="emergency-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content emergency-box">
+            <div class="emergency-header">
+                <i class="fa-solid fa-triangle-exclamation pulse-icon"></i>
+                <h2>⚠ EMERGENCY WARNING</h2>
+            </div>
+            <div class="emergency-body">
+                <p class="warning-alert-text">
+                    Some of your selected symptoms (e.g. severe chest pain or breathing difficulty) may require immediate urgent medical attention.
+                </p>
+                <div class="emergency-reasons" id="emergency-symptom-list">
+                    <!-- Dynamic Emergency Reasons -->
+                </div>
+                <div class="emergency-actions-box">
+                    <div class="hotline-card">
+                        <i class="fa-solid fa-phone-volume"></i>
+                        <div>
+                            <strong>National Medical Emergency Line</strong>
+                            <span>Call 108 / 112 Immediately</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="disclaimer-note">
+                    * Please visit the nearest Emergency Department. Do not rely only on EASY MED for emergency medical decisions.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEmergencyModal()">Back to Selection</button>
+                <button class="btn btn-danger" onclick="proceedToDoctorRecommendation(true)">I Understand, Proceed to Doctor Search</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <main class="app-main-content">
+
+        <!-- ================= PAGE 1: HOME PAGE ================= -->
+        <section id="page-home" class="page-view active">
+            <div class="hero-banner">
+                <div class="hero-badge"><i class="fa-solid fa-sparkles"></i> AI-POWERED SMART HEALTHCARE</div>
+                <h1 class="hero-title">Your Health, <span class="gradient-text">Simplified.</span></h1>
+                <p class="hero-subtitle">
+                    Find the right doctor specialization using smart symptom analysis, book instant digital consultation tokens, and track real-time hospital queues without physical waiting.
+                </p>
+
+                <div class="hero-cta-grid">
+                    <div class="cta-card highlight" onclick="navigateTo('symptoms')">
+                        <div class="cta-icon"><i class="fa-solid fa-stethoscope"></i></div>
+                        <div class="cta-text">
+                            <h3>Select Symptoms (AI)</h3>
+                            <p>Let AI suggest the right doctor department for your symptoms</p>
+                        </div>
+                        <i class="fa-solid fa-arrow-right cta-arrow"></i>
+                    </div>
+
+                    <div class="cta-card" onclick="navigateTo('doctors')">
+                        <div class="cta-icon"><i class="fa-solid fa-user-doctor"></i></div>
+                        <div class="cta-text">
+                            <h3>Find a Doctor</h3>
+                            <p>Browse doctors by rating, experience & token availability</p>
+                        </div>
+                        <i class="fa-solid fa-arrow-right cta-arrow"></i>
+                    </div>
+
+                    <div class="cta-card" onclick="navigateTo('my-token')">
+                        <div class="cta-icon"><i class="fa-solid fa-ticket-simple"></i></div>
+                        <div class="cta-text">
+                            <h3>My Token</h3>
+                            <p>Check active booking & estimated consultation time</p>
+                        </div>
+                        <i class="fa-solid fa-arrow-right cta-arrow"></i>
+                    </div>
+
+                    <div class="cta-card" onclick="navigateTo('queue-status')">
+                        <div class="cta-icon"><i class="fa-solid fa-wave-square"></i></div>
+                        <div class="cta-text">
+                            <h3>Live Queue Status</h3>
+                            <p>See currently consulting token & live waiting time</p>
+                        </div>
+                        <i class="fa-solid fa-arrow-right cta-arrow"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="stats-container">
+                <div class="stat-item">
+                    <div class="stat-num">10+</div>
+                    <div class="stat-label">Specializations</div>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <div class="stat-num">98%</div>
+                    <div class="stat-label">AI Accuracy</div>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <div class="stat-num">0 Mins</div>
+                    <div class="stat-label">Physical Waiting</div>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <div class="stat-num">Real-Time</div>
+                    <div class="stat-label">Queue Tracking</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 2: SYMPTOM SELECTION PAGE ================= -->
+        <section id="page-symptoms" class="page-view">
+            <div class="page-header">
+                <h2>What are your symptoms?</h2>
+                <p>Select all the symptoms you are currently experiencing for AI-guided doctor recommendation.</p>
+            </div>
+
+            <!-- Search and Counter Header -->
+            <div class="symptom-toolbar">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="symptom-search" placeholder="Search symptoms (e.g. fever, headache, rash)..." oninput="filterSymptoms()">
+                </div>
+                <div class="selection-counter-card">
+                    <span>Selected Symptoms:</span>
+                    <span class="count-badge" id="selected-symptoms-count">0</span>
+                    <button class="btn-clear" onclick="clearSelectedSymptoms()" id="btn-clear-symptoms" style="display:none;">Clear All</button>
+                </div>
+            </div>
+
+            <!-- Categories Container -->
+            <div id="symptoms-categories-container" class="symptoms-categories-grid">
+                <!-- Dynamically populated via JS -->
+            </div>
+
+            <!-- Bottom Floating Action Bar -->
+            <div class="symptom-action-bar">
+                <div class="selected-tags-preview" id="selected-tags-container">
+                    <span class="placeholder-text">No symptoms selected yet. Click options above.</span>
+                </div>
+                <button class="btn btn-primary btn-large" id="btn-find-doctor" onclick="processSymptomsAndFindDoctor()" disabled>
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> FIND A DOCTOR
+                </button>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 3: DOCTOR RECOMMENDATION & LIST PAGE ================= -->
+        <section id="page-doctors" class="page-view">
+            <!-- AI Recommendation Highlight (if generated) -->
+            <div id="ai-recommendation-box" class="ai-recommendation-card" style="display:none;">
+                <div class="ai-card-header">
+                    <div class="ai-title">
+                        <i class="fa-solid fa-robot"></i>
+                        <span>AI / ML Symptom Analysis</span>
+                    </div>
+                    <div class="confidence-badge" id="ai-confidence-badge">94.5% Match</div>
+                </div>
+                <div class="ai-card-body">
+                    <div class="recommendation-result">
+                        <span class="label">Recommended Doctor Specialization:</span>
+                        <h2 class="specialization-title" id="ai-recommended-spec">GENERAL MEDICINE</h2>
+                    </div>
+                    <p class="ai-reasoning-text" id="ai-reasoning-summary">
+                        Based on your selected symptoms, our ML model identified high correlation with General Medicine.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Doctor List Header and Filters -->
+            <div class="doctor-filter-bar">
+                <div class="filter-group">
+                    <label for="department-filter"><i class="fa-solid fa-layer-group"></i> Department:</label>
+                    <select id="department-filter" onchange="filterDoctors()">
+                        <option value="All">All Specializations</option>
+                        <option value="General Medicine">General Medicine</option>
+                        <option value="Cardiology">Cardiology</option>
+                        <option value="Dermatology">Dermatology</option>
+                        <option value="Dentistry">Dentistry</option>
+                        <option value="Ophthalmology">Ophthalmology</option>
+                        <option value="Orthopedics">Orthopedics</option>
+                        <option value="ENT">ENT</option>
+                        <option value="Neurology">Neurology</option>
+                        <option value="Gastroenterology">Gastroenterology</option>
+                        <option value="Urology">Urology</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="sort-filter"><i class="fa-solid fa-arrow-down-short-wide"></i> Sort By:</label>
+                    <select id="sort-filter" onchange="filterDoctors()">
+                        <option value="rating_desc">⭐ Highest Rating</option>
+                        <option value="fee_asc">💰 Lowest Consultation Fee</option>
+                        <option value="exp_desc">🎓 Years of Experience</option>
+                        <option value="tokens_desc">🎟️ Most Available Tokens</option>
+                    </select>
+                </div>
+
+                <div class="filter-group search-doctor-input">
+                    <input type="text" id="doctor-search-input" placeholder="Search doctor or hospital name..." oninput="filterDoctors()">
+                </div>
+            </div>
+
+            <!-- Doctors Cards Grid -->
+            <div id="doctors-grid" class="doctors-grid">
+                <!-- Dynamically populated via JS -->
+            </div>
+        </section>
+
+        <!-- ================= PAGE 4: MY TOKEN PAGE ================= -->
+        <section id="page-my-token" class="page-view">
+            <div class="page-header">
+                <h2>MY DIGITAL CONSULTATION TOKEN</h2>
+                <p>Track your active medical appointments and live queue position.</p>
+            </div>
+
+            <div id="my-tokens-list-container">
+                <!-- Dynamically populated via JS -->
+            </div>
+        </section>
+
+        <!-- ================= PAGE 5: QUEUE STATUS PAGE (LIVE TRACKER) ================= -->
+        <section id="page-queue-status" class="page-view">
+            <div class="page-header">
+                <h2>LIVE QUEUE STATUS TRACKER</h2>
+                <p>Track the live consultation status to avoid waiting inside the hospital corridor.</p>
+            </div>
+
+            <div class="queue-selector-bar">
+                <label for="queue-doctor-select"><i class="fa-solid fa-user-doctor"></i> Select Doctor Queue:</label>
+                <select id="queue-doctor-select" onchange="loadQueueData()">
+                    <!-- Options populated via JS -->
+                </select>
+                <span class="live-pulse-badge"><span class="dot"></span> Queue updates automatically</span>
+            </div>
+
+            <div id="queue-details-display" class="queue-status-dashboard">
+                <!-- Live Queue View matching Section 17 & 18 -->
+            </div>
+        </section>
+
+        <!-- ================= PAGE 6: DOCTOR / ADMIN QUEUE PORTAL ================= -->
+        <section id="page-admin" class="page-view">
+            <div class="page-header">
+                <h2>DOCTOR & RECEPTIONIST QUEUE MANAGEMENT</h2>
+                <p>Control consultation tokens, call next patient, and view waiting queue.</p>
+            </div>
+
+            <div class="admin-control-card">
+                <div class="admin-header-bar">
+                    <div class="select-admin-doctor">
+                        <label for="admin-doctor-select">Manage Doctor Desk:</label>
+                        <select id="admin-doctor-select" onchange="loadAdminQueueData()">
+                            <!-- Options populated -->
+                        </select>
+                    </div>
+                    <div class="desk-status-badge">DESK ONLINE</div>
+                </div>
+
+                <div id="admin-queue-view">
+                    <!-- Admin controller components populated via JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- DOCTOR DETAILS & BOOKING MODALS -->
+
+    <!-- Doctor Details Modal -->
+    <div id="doctor-details-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content doctor-modal">
+            <button class="modal-close-btn" onclick="closeDoctorModal()">&times;</button>
+            <div id="doctor-modal-body">
+                <!-- Populated via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Modal -->
+    <div id="booking-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content booking-modal-box">
+            <button class="modal-close-btn" onclick="closeBookingModal()">&times;</button>
+            <div class="modal-header-banner">
+                <i class="fa-solid fa-calendar-check"></i>
+                <h2>Book Digital Consultation Token</h2>
+            </div>
+            
+            <form id="booking-form" onsubmit="handleTokenBooking(event)">
+                <input type="hidden" id="booking-doctor-id">
+                
+                <div class="booking-summary-box">
+                    <div class="doc-mini-profile">
+                        <h3 id="book-doc-name">Dr. Anil Kumar</h3>
+                        <p id="book-doc-spec">General Medicine</p>
+                        <span id="book-doc-hospital" class="sub-text">City Care Hospital</span>
+                    </div>
+                    <div class="available-token-indicator">
+                        <span>Available Tokens:</span>
+                        <strong id="book-available-range">25 – 40</strong>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="book-patient-name">Patient Name:</label>
+                    <input type="text" id="book-patient-name" value="Rahul Sharma" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="book-date">Consultation Date:</label>
+                    <input type="date" id="book-date" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="book-session">Consultation Session:</label>
+                    <select id="book-session">
+                        <option value="Morning (9:00 AM - 1:00 PM)">Morning Session (9:00 AM - 1:00 PM)</option>
+                        <option value="Afternoon (2:00 PM - 6:00 PM)">Afternoon Session (2:00 PM - 6:00 PM)</option>
+                    </select>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeBookingModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-ticket"></i> GET TOKEN</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Booking Confirmation Modal -->
+    <div id="confirmation-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content confirmation-box">
+            <div class="success-checkmark-wrapper">
+                <div class="checkmark-circle">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+            </div>
+            <h2>BOOKING CONFIRMED ✓</h2>
+            <p class="sub-lead">Your digital consultation token has been generated successfully.</p>
+
+            <div class="token-card-preview" id="confirmation-token-card">
+                <!-- Dynamic Confirmation Content -->
+            </div>
+
+            <div class="modal-footer flex-center">
+                <button class="btn btn-secondary" onclick="closeConfirmationModal()">Close</button>
+                <button class="btn btn-primary" onclick="goToQueueFromConfirmation()"><i class="fa-solid fa-wave-square"></i> VIEW QUEUE STATUS</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <div class="logo-icon"><i class="fa-solid fa-hospital-user"></i></div>
+                <span>EASY MED</span>
+            </div>
+            <p>© 2026 EASY MED Healthcare System. Smart Doctor Recommendation & Queue Management.</p>
+        </div>
+    </footer>
+
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
